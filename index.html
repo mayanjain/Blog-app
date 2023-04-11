@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Blog Page</title>
+    <!-- Firebase dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js"></script>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDl71_7H6UnpV8voIR9s3JKH-p2dzT8xmQ",
+            authDomain: "blog-app-3e32b.firebaseapp.com",
+            projectId: "blog-app-3e32b",
+            storageBucket: "blog-app-3e32b.appspot.com",
+            messagingSenderId: "53854762266",
+            appId: "1:53854762266:web:ae18fe1c0c665b74b5a8a3"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // Initialize Firestore
+        const db = firebase.firestore();
+
+        // Listen for auth state changes
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in, show blog posts
+                showBlogPosts();
+            } else {
+                // User is signed out, show login button
+                const loginButton = document.getElementById('loginButton');
+                loginButton.style.display = 'block';
+            }
+        });
+
+        // Function to show blog posts
+        function showBlogPosts() {
+            const blogList = document.getElementById('blogList');
+            db.collection('blogPosts').get().then(querySnapshot => {
+                blogList.innerHTML = ''; // Clear the blog list
+                querySnapshot.forEach(doc => {
+                    // Add each blog post to the list
+                    const blogData = doc.data();
+                    const blogItem = document.createElement('li');
+                    blogItem.textContent = `${blogData.title} by ${blogData.author}`;
+                    blogList.appendChild(blogItem);
+                });
+            });
+        }
+
+        // Function to handle login with Google
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider);
+        }
+
+        // Function to handle login with Gmail
+        function loginWithGmail() {
+            const provider = new firebase.auth.OAuthProvider('google.com');
+            provider.addScope('https://www.googleapis.com/auth/gmail.readonly');
+            firebase.auth().signInWithPopup(provider);
+        }
+
+        // Function to handle logout
+        function logout() {
+            firebase.auth().signOut();
+        }
+
+        // Function to create a new blog post
+        function createBlogPost() {
+            const title = document.getElementById('blogTitle').value;
+            const author = firebase.auth().currentUser.displayName;
+            db.collection('blogPosts').add({ title, author });
+            showBlogPosts(); // Update the blog list
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Blog Page</h1>
+
+    <div id="loginButton" style="display:none">
+        <button onclick="loginWithGoogle()">Login with Google</button>
+        <button onclick="loginWithGmail()">Login with Gmail</button>
+    </div>
+
+    <div id="loggedInContent" style="display:none">
+        <p>Welcome, <span id="userDisplayName"></span>!</p>
+        <button onclick="logout()">Logout</button>
+
+        <h2>Create a new blog post</h2>
+        <label>Title:</label><input type="text" id="blogTitle">
+        <button onclick="createBlogPost()">Create</button>
+
+        <h2>Blog Posts</h2>
+        <ul id="blogList"></ul>
+    </div>
+</body>
+
+</html>
